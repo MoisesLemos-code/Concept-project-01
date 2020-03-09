@@ -7,13 +7,20 @@
     </nav>
 
     <div class="container">
-      <form>
+      <ul>
+        <li v-for="(erro, index) of errors" :key="index">
+          campo
+          <b>{{ erro.field }}</b>
+          - {{ erro.defaultMessage }}
+        </li>
+      </ul>
+      <form @submit.prevent="salvar">
         <label>Nome</label>
-        <input type="text" placeholder="Nome" />
+        <input type="text" placeholder="Nome" v-model="produto.descricao" />
         <label>Quantidade</label>
-        <input type="number" placeholder="QTD" />
+        <input type="number" placeholder="QTD" v-model="produto.quantidade" />
         <label>Valor</label>
-        <input type="text" placeholder="Valor" />
+        <input type="text" placeholder="Valor" v-model="produto.valor" />
 
         <button class="waves-effect waves-light btn-small">
           Salvar
@@ -32,16 +39,16 @@
         </thead>
 
         <tbody>
-          <tr>
-            <td>Arduino</td>
-            <td>100</td>
-            <td>50.00</td>
+          <tr v-for="produto of produtos" :key="produto.codigo">
+            <td>{{ produto.descricao }}</td>
+            <td>{{ produto.quantidade }}</td>
+            <td>{{ produto.valor }}</td>
             <td>
-              <button class="waves-effect btn-small blue darken-1">
+              <button @click="editar(produto)" class="waves-effect btn-small blue darken-1">
                 <i class="material-icons">create</i>
               </button>
               <button class="waves-effect btn-small red darken-1">
-                <i class="material-icons">delete_sweep</i>
+                <i @click="remover(produto)" class="material-icons">delete_sweep</i>
               </button>
             </td>
           </tr>
@@ -55,10 +62,71 @@
 import Produto from "./services/produtos";
 
 export default {
+  data() {
+    return {
+      produto: {
+        codigo: "",
+        descricao: "",
+        quantidade: "",
+        valor: ""
+      },
+      produtos: [],
+      errors: []
+    };
+  },
   mounted() {
-    Produto.listar().then(resposta => {
-      console.log(resposta);
-    });
+    this.listar();
+  },
+  methods: {
+    listar() {
+      Produto.listar().then(resposta => {
+        this.produtos = resposta.data;
+      });
+    },
+    salvar() {
+      if (!this.produto.codigo) {
+        Produto.salvar(this.produto)
+          .then(() => {
+            //Limpar objeto de produto
+            this.produto = {};
+            alert("Salvo com sucesso");
+            this.listar();
+            //Limpar array de erros
+            this.errors = [];
+          })
+          .catch(e => {
+            this.errors = e.response.data.errors;
+          });
+      } else {
+        Produto.atualizar(this.produto)
+          .then(() => {
+            //Limpar objeto de produto
+            this.produto = {};
+            alert("Editado com sucesso");
+            this.listar();
+            //Limpar array de erros
+            this.errors = [];
+          })
+          .catch(e => {
+            this.errors = e.response.data.errors;
+          });
+      }
+    },
+    editar(produto) {
+      this.produto = produto;
+    },
+    remover(produto) {
+      if (confirm("Deseja excluir o produto?")) {
+        Produto.apagar(produto)
+          .then(() => {
+            this.listar();
+            this.errors = [];
+          })
+          .cath(e => {
+            this.errors = e.response.data.errors;
+          });
+      }
+    }
   }
 };
 </script>

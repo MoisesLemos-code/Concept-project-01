@@ -8,6 +8,7 @@ import org.hibernate.validator.constraints.Length;
 
 import com.moises.APIconceito.domain.Produto;
 
+
 public class ProdutoDTO implements Serializable {
 	private static final long serialVersionUID = 1L;
 	
